@@ -12,9 +12,9 @@ class CRM_Correctcontribution_Upgrader extends CRM_Correctcontribution_Upgrader_
     $maxId = CRM_Core_DAO::singleValueQuery('SELECT max(id) FROM civicrm_contact');
     for ($startId = $minId; $startId <= $maxId; $startId += self::BATCH_SIZE) {
       $endId = $startId + self::BATCH_SIZE - 1;
-      $title = ts('Upgrade Batch (%1 => %2)', array(
+      $title = ts('Correct contacts (%1 / %2)', array(
         1 => $startId,
-        2 => $endId,
+        2 => $maxId,
       ));
       $this->addTask($title, 'correct', $startId, $endId);
     }
