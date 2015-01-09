@@ -8,22 +8,21 @@ class CRM_Correctcontribution_Upgrader extends CRM_Correctcontribution_Upgrader_
     const BATCH_SIZE = 500;
     
   public function upgrade_1001() {
-    $minId = CRM_Core_DAO::singleValueQuery('SELECT min(id) FROM civicrm_contact');
-    $maxId = CRM_Core_DAO::singleValueQuery('SELECT max(id) FROM civicrm_contact');
-    for ($startId = $minId; $startId <= $maxId; $startId += self::BATCH_SIZE) {
-      $endId = $startId + self::BATCH_SIZE - 1;
-      $title = ts('Correct contacts (%1 / %2)', array(
-        1 => $startId,
-        2 => $maxId,
+    $total = CRM_Core_DAO::singleValueQuery("SELECT COUNT(*) as `total` ".  CRM_Correctcontribution_Task::getQuery()."");  
+    
+    for ($i = 0; $i <= $total; $i += self::BATCH_SIZE) {
+      $title = ts('Correct acceptgiro contributions (%1 / %2)', array(
+        1 => $i,
+        2 => $total,
       ));
-      $this->addTask($title, 'correct', $startId, $endId);
+      $this->addTask($title, 'correct', $i, self::BATCH_SIZE);
     }
     
     return true;
   }
   
-  public static function correct($startId, $endId) {
-      CRM_Correctcontribution_Task::correctContacts($startId, $endId);
+  public static function correct($offset, $limit) {
+      CRM_Correctcontribution_Task::correctAcceptGiroContributions($offset, $limit);
       return true;
   }
 
