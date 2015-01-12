@@ -8,22 +8,37 @@ class CRM_Correctcontribution_Upgrader extends CRM_Correctcontribution_Upgrader_
     const BATCH_SIZE = 500;
     
   public function upgrade_1001() {
-    $minId = CRM_Core_DAO::singleValueQuery('SELECT min(id) FROM civicrm_contact');
-    $maxId = CRM_Core_DAO::singleValueQuery('SELECT max(id) FROM civicrm_contact');
-    for ($startId = $minId; $startId <= $maxId; $startId += self::BATCH_SIZE) {
-      $endId = $startId + self::BATCH_SIZE - 1;
-      $title = ts('Correct contacts (%1 / %2)', array(
-        1 => $startId,
-        2 => $maxId,
-      ));
-      $this->addTask($title, 'correct', $startId, $endId);
-    }
-    
-    return true;
-  }
-  
-  public static function correct($startId, $endId) {
-      CRM_Correctcontribution_Task::correctContacts($startId, $endId);
+      $sql = "UPDATE civicrm_contribution c
+            inner join civicrm_membership_payment mp on mp.contribution_id = c.id
+            inner join civicrm_membership m on mp.membership_id = m.id
+            inner join civicrm_membership_type mt on m.membership_type_id = mt.id
+            inner join civicrm_financial_type ft on ft.id = c.financial_type_id
+            
+            set c.financial_type_id = %1
+            where m.membership_type_id = %2 and c.financial_type_id = 2";
+      
+      $corrections = array(
+          //update Lid SP type id:1 financial type id: 6
+          array(
+              1 => array(6, 'Integer'),
+              2 => array(1, 'Integer'),
+          ),
+          //update Lid Rood type id:3 financial type id: 5
+          array(
+              1 => array(5, 'Integer'),
+              2 => array(3, 'Integer'),
+          ),
+          //update Lid SP + Rood type id:2 financial type id: 7
+          array(
+              1 => array(7, 'Integer'),
+              2 => array(2, 'Integer'),
+          )
+      );
+      
+      foreach($corrections as $params) {
+          CRM_Core_DAO::executeQuery($sql, $params);
+      }
+      
       return true;
   }
 
