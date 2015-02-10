@@ -31,7 +31,7 @@ class CRM_Correctcontribution_Task {
         }
 
         foreach($deletableContributions as $contribution_id) {
-            civicrm_api3('Contribution', 'delete', array('id' => $contribution_id));
+            CRM_Contribute_BAO_Contribution::deleteContribution($contribution_id);
         }
     }
 
@@ -46,6 +46,7 @@ class CRM_Correctcontribution_Task {
         if ($instrument_id) {
             $params['contribution_payment_instrument_id'] = $instrument_id;
         }
+        $params['contribution_status_id'] = 2; //pending
 
 
         $result = CRM_Contribute_BAO_Contribution::create($params);
