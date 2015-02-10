@@ -5,7 +5,7 @@
  */
 class CRM_Correctcontribution_Upgrader extends CRM_Correctcontribution_Upgrader_Base {
 
-    const BATCH_SIZE = 250;
+    const BATCH_SIZE = 150;
     
   public function upgrade_1001() {
     $minId = CRM_Core_DAO::singleValueQuery('SELECT min(id) FROM civicrm_contact');
@@ -22,7 +22,7 @@ class CRM_Correctcontribution_Upgrader extends CRM_Correctcontribution_Upgrader_
     return true;
   }
 
-  public function upgrade_1002() {
+  public function upgrade_1003() {
     $sql = "SELECT c.id as contribution_id, mp.membership_id FROM `civicrm_contribution` `c`
                     INNER JOIN `civicrm_membership_payment` `mp` ON c.id = mp.contribution_id
                     INNER JOIN `civicrm_membership` `m` ON `mp`.`membership_id` = `m`.`id`
@@ -31,7 +31,7 @@ class CRM_Correctcontribution_Upgrader extends CRM_Correctcontribution_Upgrader_
                     WHERE
                         DATE(c.receive_date) >= DATE('2015-02-01')
                         AND DATE(c.receive_date) <= DATE('2015-02-28')
-                        AND c.contribution_status_id = 1
+                        AND c.contribution_status_id = 2
                         AND ms.is_current_member = 1
                         AND `mq`.`pay_quartely` = 1
                         ";
@@ -50,6 +50,8 @@ class CRM_Correctcontribution_Upgrader extends CRM_Correctcontribution_Upgrader_
     foreach($deletableContributions as $contribution_id) {
       CRM_Contribute_BAO_Contribution::deleteContribution($contribution_id);
     }
+
+    return true;
   }
   
   public static function correct($startId, $endId) {
