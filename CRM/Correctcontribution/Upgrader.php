@@ -40,7 +40,6 @@ class CRM_Correctcontribution_Upgrader extends CRM_Correctcontribution_Upgrader_
     $dao = CRM_Core_DAO::executeQuery($sql);
     while($dao->fetch()) {
       $contribution = civicrm_api3('Contribution', 'getsingle', array('id' => $dao->contribution_id));
-      CRM_Correctcontribution_Task::addNewContribution(new DateTime('2015-01-01'), $dao->membership_id, $contribution);
       CRM_Correctcontribution_Task::addNewContribution(new DateTime('2015-04-01'), $dao->membership_id, $contribution);
       CRM_Correctcontribution_Task::addNewContribution(new DateTime('2015-07-01'), $dao->membership_id, $contribution);
       CRM_Correctcontribution_Task::addNewContribution(new DateTime('2015-10-01'), $dao->membership_id, $contribution);
