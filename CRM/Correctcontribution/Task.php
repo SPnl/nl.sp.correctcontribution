@@ -48,11 +48,12 @@ class CRM_Correctcontribution_Task {
         }
 
 
-        $result = civicrm_api3('Contribution', 'create', $params);
+        $result = CRM_Contribute_BAO_Contribution::create($params);
+        //$result = civicrm_api3('Contribution', 'create', $params);
 
         //$mpBao = new CRM_Member_BAO_MembershipPayment();
         $mpBao['membership_id'] = $membership_id;
-        $mpBao['contribution_id'] = $result['id'];
+        $mpBao['contribution_id'] = $result->id;
         CRM_Member_BAO_MembershipPayment::create($mpBao);
     }
 

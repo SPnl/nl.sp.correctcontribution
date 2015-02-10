@@ -5,7 +5,7 @@
  */
 class CRM_Correctcontribution_Upgrader extends CRM_Correctcontribution_Upgrader_Base {
 
-    const BATCH_SIZE = 500;
+    const BATCH_SIZE = 100;
     
   public function upgrade_1001() {
     $minId = CRM_Core_DAO::singleValueQuery('SELECT min(id) FROM civicrm_contact');
