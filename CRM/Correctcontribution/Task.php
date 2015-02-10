@@ -35,7 +35,7 @@ class CRM_Correctcontribution_Task {
         }
     }
 
-    protected static function addNewContribution(DateTime $receive_date, $membership_id, $first_contribution) {
+    public static function addNewContribution(DateTime $receive_date, $membership_id, $first_contribution) {
         $params = $first_contribution;
         $instrument_id = self::getPaymenyInstrument($params);
         $params['receive_date'] = $receive_date->format('YmdHis');

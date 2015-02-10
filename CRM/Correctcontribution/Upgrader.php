@@ -21,6 +21,37 @@ class CRM_Correctcontribution_Upgrader extends CRM_Correctcontribution_Upgrader_
     
     return true;
   }
+
+  public function upgrade_1002() {
+    $sql = "SELECT c.id as contribution_id, mp.membership_id FROM `civicrm_contribution` `c`
+                    INNER JOIN `civicrm_membership_payment` `mp` ON c.id = mp.contribution_id
+                    INNER JOIN `civicrm_membership` `m` ON `mp`.`membership_id` = `m`.`id`
+                    INNER JOIN `civicrm_membership_status` `ms` ON `m`.`status_id` = `ms`.`id`
+                    INNER JOIN `civicrm_membership_type_pay_quartely` `mq` ON `mq`.`membership_type_id` = `m`.`membership_type_id`
+                    WHERE
+                        DATE(c.receive_date) >= DATE('2015-02-01')
+                        AND DATE(c.receive_date) <= DATE('2015-02-28')
+                        AND c.contribution_status_id = 1
+                        AND ms.is_current_member = 1
+                        AND `mq`.`pay_quartely` = 1
+                        ";
+
+    $deletableContributions = array();
+    $dao = CRM_Core_DAO::executeQuery($sql);
+    while($dao->fetch()) {
+      $contribution = civicrm_api3('Contribution', 'getsingle', array('id' => $dao->contribution_id));
+      CRM_Correctcontribution_Task::addNewContribution(new DateTime('2015-01-01'), $dao->membership_id, $contribution);
+      CRM_Correctcontribution_Task::addNewContribution(new DateTime('2015-04-01'), $dao->membership_id, $contribution);
+      CRM_Correctcontribution_Task::addNewContribution(new DateTime('2015-07-01'), $dao->membership_id, $contribution);
+      CRM_Correctcontribution_Task::addNewContribution(new DateTime('2015-10-01'), $dao->membership_id, $contribution);
+
+      $deletableContributions[] = $dao->contribution_id;
+    }
+
+    foreach($deletableContributions as $contribution_id) {
+      CRM_Contribute_BAO_Contribution::deleteContribution($contribution_id);
+    }
+  }
   
   public static function correct($startId, $endId) {
       CRM_Correctcontribution_Task::correctContacts($startId, $endId);
