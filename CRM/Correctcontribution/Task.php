@@ -7,15 +7,18 @@ class CRM_Correctcontribution_Task {
                     INNER JOIN `civicrm_membership_payment` `mp` ON c.id = mp.contribution_id
                     INNER JOIN `civicrm_membership` `m` ON `mp`.`membership_id` = `m`.`id`
                     INNER JOIN `civicrm_membership_status` `ms` ON `m`.`status_id` = `ms`.`id`
+                    INNER JOIN `civicrm_membership_type_pay_quartely` `mq` ON `mq`.`membership_type_id` = `m`.`membership_type_id`
                     WHERE 
                         DATE(c.receive_date) = DATE('2014-01-01')
                         AND c.contribution_status_id = 1
                         AND ms.is_current_member = 1
+                        AND `mq`.`pay_quartely` = 1
                         AND c.contact_id between %1 AND %2";
-        
+
         $params[1] = array($minId, 'Integer');
         $params[2] = array($maxId, 'Integer');
-            
+
+        $deletableContributions = array();
         $dao = CRM_Core_DAO::executeQuery($sql, $params);
         while($dao->fetch()) {
             $contribution = civicrm_api3('Contribution', 'getsingle', array('id' => $dao->contribution_id));
@@ -24,12 +27,16 @@ class CRM_Correctcontribution_Task {
             self::addNewContribution(new DateTime('2015-07-01'), $dao->membership_id, $contribution);
             self::addNewContribution(new DateTime('2015-10-01'), $dao->membership_id, $contribution);
 
-            civicrm_api3('Contribution', 'delete', array('id' => $dao->contribution_id));
+            $deletableContributions[] = $dao->contribution_id;
+        }
+
+        foreach($deletableContributions as $contribution_id) {
+            civicrm_api3('Contribution', 'delete', array('id' => $contribution_id));
         }
     }
 
     protected static function addNewContribution(DateTime $receive_date, $membership_id, $first_contribution) {
-        $params = clone $first_contribution;
+        $params = $first_contribution;
         $instrument_id = self::getPaymenyInstrument($params);
         $params['receive_date'] = $receive_date->format('YmdHis');
         unset($params['payment_instrument']);
