@@ -30,9 +30,7 @@ class CRM_Correctcontribution_Task {
             $deletableContributions[] = $dao->contribution_id;
         }
 
-        foreach($deletableContributions as $contribution_id) {
-            CRM_Contribute_BAO_Contribution::deleteContribution($contribution_id);
-        }
+        sleep(2);
     }
 
     public static function addNewContribution(DateTime $receive_date, $membership_id, $first_contribution) {
@@ -44,10 +42,9 @@ class CRM_Correctcontribution_Task {
         unset($params['id']);
         unset($params['instrument_id']);
         if ($instrument_id) {
-            $params['contribution_payment_instrument_id'] = $instrument_id;
+            $params['payment_instrument_id'] = $instrument_id;
         }
         $params['contribution_status_id'] = 2; //pending
-
 
         $result = CRM_Contribute_BAO_Contribution::create($params);
         //$result = civicrm_api3('Contribution', 'create', $params);
