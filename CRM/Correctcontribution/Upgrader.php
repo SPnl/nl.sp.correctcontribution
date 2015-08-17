@@ -8,35 +8,23 @@ class CRM_Correctcontribution_Upgrader extends CRM_Correctcontribution_Upgrader_
     const BATCH_SIZE = 500;
     
   public function upgrade_1001() {
-      $sql = "UPDATE civicrm_contribution c
-            inner join civicrm_membership_payment mp on mp.contribution_id = c.id
-            inner join civicrm_membership m on mp.membership_id = m.id
-            inner join civicrm_membership_type mt on m.membership_type_id = mt.id
-            inner join civicrm_financial_type ft on ft.id = c.financial_type_id
-            
-            set c.financial_type_id = %1
-            where m.membership_type_id = %2 and c.financial_type_id = 2";
-      
-      $corrections = array(
-          //update Lid SP type id:1 financial type id: 6
-          array(
-              1 => array(6, 'Integer'),
-              2 => array(1, 'Integer'),
-          ),
-          //update Lid Rood type id:3 financial type id: 5
-          array(
-              1 => array(5, 'Integer'),
-              2 => array(3, 'Integer'),
-          ),
-          //update Lid SP + Rood type id:2 financial type id: 7
-          array(
-              1 => array(7, 'Integer'),
-              2 => array(2, 'Integer'),
-          )
+      $dao = CRM_Core_DAO::executeQuery("
+        select c.id as id, mt.financial_type_id
+        from civicrm_contribution c
+        inner join civicrm_membership_payment mp on c.id = mp.contribution_id
+        inner join civicrm_membership m on mp.membership_id = m.id
+        inner join civicrm_membership_type mt on m.membership_type_id = mt.id
+        left join civicrm_financial_type cft on c.financial_type_id = cft.id
+        left join civicrm_financial_type mft on mt.financial_type_id = mft.id
+        where c.financial_type_id != mt.financial_type_id
+        order by c.id;"
       );
-      
-      foreach($corrections as $params) {
-          CRM_Core_DAO::executeQuery($sql, $params);
+      while($dao->fetch()) {
+        $params = array(
+          'id' => $dao->id,
+          'financial_type_id' => $dao->financial_type_id
+        );
+        $contribution = civicrm_api3('Contribution', 'create', $params);
       }
       
       return true;
