@@ -8,22 +8,31 @@ class CRM_Correctcontribution_Upgrader extends CRM_Correctcontribution_Upgrader_
     const BATCH_SIZE = 500;
     
   public function upgrade_1001() {
-    $minId = CRM_Core_DAO::singleValueQuery('SELECT min(id) FROM civicrm_contact');
-    $maxId = CRM_Core_DAO::singleValueQuery('SELECT max(id) FROM civicrm_contact');
-    for ($startId = $minId; $startId <= $maxId; $startId += self::BATCH_SIZE) {
-      $endId = $startId + self::BATCH_SIZE - 1;
-      $title = ts('Correct contacts (%1 / %2)', array(
-        1 => $startId,
-        2 => $maxId,
+    $sql = "select contact.display_name, mp16.membership_id as membership_id, c2015.payment_instrument_id as pyament_instrument_2015, c2016.payment_instrument_id as pyament_instrument_2016
+
+from civicrm_contribution c2016
+inner join civicrm_membership_payment mp16 on mp16.contribution_id = c2016.id
+inner join (select payment_instrument_id, m.id as membership_id, c2015.id as contribution_id from civicrm_contribution c2015
+	inner join civicrm_membership_payment mp on c2015.id = mp.contribution_id
+	inner join civicrm_membership m on mp.membership_id = m.id
+	where year(m.end_date) >= 2016 and c2015.receive_date = '2015-10-01') as c2015 on c2015.membership_id = mp16.membership_id
+inner join civicrm_contact contact on contact.id = c2016.contact_id
+where c2016.receive_date = '2016-01-01' and c2016.payment_instrument_id != c2015.payment_instrument_id and c2015.payment_instrument_id != 10;";
+    $dao = CRM_Core_DAO::executeQuery($sql);
+    $i =1;
+    while($dao->fetch()) {
+      $title = ts('Correct membershippayments for 2016 (%1)', array(
+        1 => $i
       ));
-      $this->addTask($title, 'correct', $startId, $endId);
+      $this->addTask($title, 'correct', $dao->membership_id, $dao->pyament_instrument_2015);
+      $i++;
     }
     
     return true;
   }
   
-  public static function correct($startId, $endId) {
-      CRM_Correctcontribution_Task::correctContacts($startId, $endId);
+  public static function correct($membership_id, $payment_instrument_id) {
+      CRM_Correctcontribution_Task::correctMembershipPayment($membership_id, $payment_instrument_id);
       return true;
   }
 

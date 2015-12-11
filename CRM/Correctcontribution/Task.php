@@ -2,47 +2,17 @@
 
 class CRM_Correctcontribution_Task {
 
-    public static function correctContacts($minId, $maxId) {        
-        $sql = "SELECT c.*, mp.membership_id FROM `civicrm_contribution` `c`
-                    INNER JOIN `civicrm_membership_payment` `mp` ON c.id = mp.contribution_id
-                    WHERE 
-                        DATE(c.receive_date) = DATE('2015-01-01')
-                        AND c.contribution_status_id = 1
-                        AND contact_id between %1 AND %2";
-        
-        $params[1] = array($minId, 'Integer');
-        $params[2] = array($maxId, 'Integer');
-            
+    public static function correctMembershipPayment($menbership_id, $payment_instrument_2015) {
+        $sql = "SELECT c.id from civicrm_contribution c inner join civicrm_membership_payment mp on mp.contribution_id = c.id
+                WHERE YEAR(c.receive_date) = 2016 and mp.membership_id = %1 and c.payment_instrument_id != %1";
+        $params[1] = array($menbership_id, 'Integer');
+        $params[2] = array($payment_instrument_2015, 'Integer');
         $dao = CRM_Core_DAO::executeQuery($sql, $params);
-        while($dao->fetch()) {
-            self::correctPaymentInstrument($dao->contact_id, $dao->membership_id, $dao->payment_instrument_id);
+        while ($dao->fetch()) {
+            $contribution['id'] = $dao->id;
+            $contribution['contribution_payment_instrument_id'] = $payment_instrument_2015;
+            civicrm_api3('Contribution', 'create', $contribution);
         }
-        
-        $update = "UPDATE `civicrm_contribution` `c`
-                    SET receive_date = DATE('2014-10-01')
-                    WHERE 
-                        DATE(c.receive_date) = DATE('2015-01-01')
-                        AND c.contribution_status_id = 1
-                        AND contact_id between %1 AND %2";
-        CRM_Core_DAO::executeQuery($update, $params);
-    }
-
-    protected static function correctPaymentInstrument($contact_id, $membership_id, $correctPaymentInstrumentId) {
-        $sql = "UPDATE `civicrm_contribution` `c`
-                INNER JOIN `civicrm_membership_payment` `mp` ON c.id = mp.contribution_id
-                SET `payment_instrument_id` = %1
-                WHERE 
-                    mp.membership_id = %2
-                    AND c.contact_id = %3
-                    AND c.payment_instrument_id != %4
-                    AND c.contribution_status_id = 2";
-        
-        $params[1] = array($correctPaymentInstrumentId, 'Integer');
-        $params[2] = array($membership_id, 'Integer');
-        $params[3] = array($contact_id, 'Integer');
-        $params[4] = array($correctPaymentInstrumentId, 'Integer');
-        
-        CRM_Core_DAO::executeQuery($sql, $params);
     }
 
 }
